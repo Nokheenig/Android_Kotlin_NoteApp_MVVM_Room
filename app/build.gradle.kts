@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("kapt") version "1.9.22"
 }
 
 android {
@@ -41,9 +42,25 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
 
     //room
-    val room_version = "2.5.0"
+    val room_version = "2.6.0-alpha02"
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
+    // To use Kotlin annotation processing tool (kapt)
+    kapt("androidx.room:room-compiler:$room_version")
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation("androidx.room:room-ktx:$room_version")
+
+
+
+    // JetPack Libraries - Activity - Access composable APIs built on top of Activity.
+    // Kotlin
+    val activity_version = "1.8.2"
+    implementation("androidx.activity:activity-ktx:$activity_version")
+
+    // JetPack Libraries - Fragments - Segment your app into multiple, independent screens that are hosted within an Activity.
+    // Kotlin
+    val fragment_version = "1.6.2"
+    implementation("androidx.fragment:fragment-ktx:$fragment_version")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
