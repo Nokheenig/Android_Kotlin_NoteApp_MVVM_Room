@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
@@ -17,7 +18,7 @@ import com.example.room.adaptors.NoteAdaptor
 import com.example.room.utils.Constants
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NoteAdaptor.OnClickListener {
 
     @Suppress("UNCHECKED_CAST")
     private val factory:  ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -32,13 +33,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var notesAdaptor: NoteAdaptor
     private lateinit var addNoteButton: FloatingActionButton
+    private lateinit var getResult: ActivityResultLauncher<Intent>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         addNoteButton = findViewById(R.id.add_note_button)
         recyclerView = findViewById(R.id.recycler_view)
-        notesAdaptor = NoteAdaptor()
+        notesAdaptor = NoteAdaptor(this)
         recyclerView.adapter = notesAdaptor
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -54,9 +56,9 @@ class MainActivity : AppCompatActivity() {
             notesAdaptor.setNotes(list)
         }
 
-        val getResult =
+        getResult =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (it.resultCode == Constants.REQUEST_CODE){
+                if (it.resultCode == Constants.ADD_REQUEST_CODE){
                     // If it matches, then we get the data
                     val title = it.data?.getStringExtra(Constants.EXTRA_TITLE)
                     val description = it.data?.getStringExtra(Constants.EXTRA_DESCRIPTION)
@@ -64,6 +66,15 @@ class MainActivity : AppCompatActivity() {
 
                     val note = Note(title!!, description!!, priority!!)
                     noteViewModel.addNote(note)
+                } else if (it.resultCode == Constants.EDIT_REQUEST_CODE) {
+                    val title = it.data?.getStringExtra(Constants.EXTRA_TITLE)
+                    val description = it.data?.getStringExtra(Constants.EXTRA_DESCRIPTION)
+                    val priority = it.data?.getIntExtra(Constants.EXTRA_PRIORITY, -1)
+                    val id = it.data?.getIntExtra(Constants.EXTRA_ID, -1)
+
+                    val note = Note(title!!, description!!, priority!!)
+                    note.id = id!!
+                    noteViewModel.updateNote(note)
                 }
             }
 
@@ -99,5 +110,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onClickItem(note: Note) {
+        val title = note.title
+        val description = note.description
+        val priority = note.priority
+        val id = note.id
+
+        val intent = Intent(this@MainActivity, AddEditActivity::class.java)
+        intent.putExtra(Constants.EXTRA_TITLE, title)
+        intent.putExtra(Constants.EXTRA_DESCRIPTION, description)
+        intent.putExtra(Constants.EXTRA_PRIORITY, priority)
+        intent.putExtra(Constants.EXTRA_ID, id)
+        getResult.launch(intent)
     }
 }
